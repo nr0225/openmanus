@@ -1,0 +1,15 @@
+services:
+  openmanus:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: openmanus:private-local
+    container_name: openmanus-private
+    working_dir: /app/OpenManus
+    stdin_open: true
+    tty: true
+    volumes:
+      - ${CONFIG_DIR:-./config}:/app/OpenManus/config
+    network_mode: host
+    command: ["bash", "-lc", "python main.py"]
+    restart: unless-stopped

@@ -117,6 +117,244 @@ base_url = "https://api.openai.com/v1"
 api_key = "sk-..."  # 替换为真实 API 密钥
 ```
 
+## 我在哪裡改？你要怎麼抓到本機？
+
+你看到的這些檔案，都是改在 **Git 倉庫裡**（不是你電腦自動出現）。
+
+檔案路徑如下（都在專案根目錄下）：
+- `scripts/setup_private_local.sh`
+- `scripts/run_private_local.sh`
+- `docs_private_deploy_zh.md`
+- `docker-compose.private.yml`
+- `.env.private.example`
+
+### 你現在要做的（從 GitHub 下載到本機）
+
+```bash
+# 1) 先去你要放專案的資料夾
+cd /opt
+
+# 2) 從 GitHub 下載專案
+git clone https://github.com/FoundationAgents/OpenManus.git openmanus
+
+# 3) 進入專案
+cd /opt/openmanus
+
+# 4) 看目前分支
+git branch
+
+# 5) 把遠端最新資料抓下來
+git fetch --all --prune
+```
+
+如果這些變更是在某個 PR 分支上，請再切那個分支：
+
+```bash
+# 範例：切到某個分支
+# git checkout <branch-name>
+
+# 或你知道 PR 號碼（例如 1234）
+# git fetch origin pull/1234/head:pr-1234
+# git checkout pr-1234
+```
+
+切好分支後，你可以直接檢查檔案是否存在：
+
+```bash
+ls scripts
+ls -a | rg "\.env\.private\.example"
+ls | rg "docs_private_deploy_zh.md|docker-compose.private.yml"
+```
+
+### 不會 GitHub 指令也可以（純網頁操作）
+
+如果你看不懂 `git clone` 沒關係，照這個「點按鈕」版本：
+
+1. 打開瀏覽器進到專案首頁：
+   `https://github.com/FoundationAgents/OpenManus`
+2. 按綠色按鈕 **Code**。
+3. 按 **Download ZIP**。
+4. 下載完後，解壓縮 ZIP（通常會在「下載」資料夾）。
+5. 把解壓縮後資料夾重新命名成 `openmanus`（方便後面操作）。
+6. 打開終端機，輸入（把路徑改成你的實際路徑）：
+
+```bash
+cd ~/Downloads/openmanus
+bash scripts/run_private_local.sh
+```
+
+如果你是從某個 PR 網頁要抓版本：
+1. 先打開那個 PR 頁面。
+2. 在 PR 頁面找到 **Files changed**（可先確認有 `scripts/run_private_local.sh` 這些檔案）。
+3. 回到 PR 頁面上方，按分支名稱（例如 `user:branch`），進入該分支。
+4. 在該分支頁面按 **Code → Download ZIP**。
+
+### 先確認你是不是下載錯專案（照貼這段）
+
+先在你現在的資料夾直接貼上：
+
+```bash
+pwd
+ls
+[ -f main.py ] && echo "OK: 有 main.py" || echo "錯誤: 沒有 main.py"
+[ -f requirements.txt ] && echo "OK: 有 requirements.txt" || echo "錯誤: 沒有 requirements.txt"
+[ -d app ] && echo "OK: 有 app/" || echo "錯誤: 沒有 app/"
+[ -d config ] && echo "OK: 有 config/" || echo "錯誤: 沒有 config/"
+```
+
+如果有任何一項顯示「錯誤」，代表你現在不在正確專案根目錄。
+
+請直接重抓正確版本（macOS）：
+
+```bash
+cd ~/Downloads
+rm -rf openmanus OpenManus-main
+git clone https://github.com/FoundationAgents/OpenManus.git openmanus
+cd openmanus
+git remote -v
+```
+
+`git remote -v` 應該看到 `FoundationAgents/OpenManus`，看到就代表抓對了。
+
+### 你現在畫面這種錯誤（`No such file or directory`）怎麼處理
+
+你現在在 `OpenManus-main` 目錄，但那個版本裡可能還沒有 `scripts/run_private_local.sh`。  
+先直接貼這段（macOS）：
+
+```bash
+cd ~/Downloads/OpenManus-main
+ls scripts
+```
+
+- 如果看得到 `run_private_local.sh`：
+```bash
+bash scripts/run_private_local.sh
+```
+
+- 如果 **看不到** `run_private_local.sh`：代表你下載的是舊版 ZIP，請改用 Git 下載最新版本：
+
+```bash
+cd ~/Downloads
+rm -rf openmanus
+git clone https://github.com/FoundationAgents/OpenManus.git openmanus
+cd openmanus
+bash scripts/run_private_local.sh
+```
+
+如果你電腦沒有 git，先安裝 Xcode Command Line Tools：
+
+```bash
+xcode-select --install
+```
+
+### 如果你的版本沒有 `scripts/`（照你截圖這種）
+
+你的畫面顯示 `ls scripts` 也不存在，代表你現在這份程式碼不包含我新增的輔助腳本。  
+**沒關係，先用這組「不依賴 scripts」的指令直接跑：**
+
+```bash
+cd ~/Downloads/openmanus
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp config/config.example-model-ollama.toml config/config.toml
+python main.py
+```
+
+> 注意：你先前輸入過 `[bash scripts/run_private_local.sh]`，中括號 `[]` 不要打；正確是 `bash scripts/run_private_local.sh`。
+
+### 你這張圖現在這個錯誤（Python 3.14）有關係，而且是關鍵
+
+### 不重抓專案也能救（直接修你本機檔案）
+
+如果你現在已經在 `~/Downloads/OpenManus-main`，不想重抓 GitHub，直接貼這段：
+
+```bash
+cd ~/Downloads/OpenManus-main
+
+# 把 pillow 改成和 crawl4ai 相容的版本
+python3 - <<'PY'
+from pathlib import Path
+p = Path('requirements.txt')
+s = p.read_text()
+s = s.replace('pillow~=11.1.0', 'pillow~=10.4.0')
+p.write_text(s)
+print('requirements patched: pillow~=10.4.0')
+PY
+
+# 用 Python 3.12 重建環境
+rm -rf .venv
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+python main.py
+```
+
+
+> 補充：已修正 `pillow` 與 `crawl4ai` 的版本衝突。請先 `git pull`（或重新下載最新版 ZIP）再安裝依賴。
+
+
+有關係。你畫面裡有這行：`Unsupported Python version 3.14.3, please use 3.11-3.13`，
+所以才會出現依賴衝突（`pillow` / `crawl4ai`）和 `ModuleNotFoundError: pydantic`。
+
+請直接照貼（macOS）：
+
+```bash
+cd ~/Downloads/openmanus
+
+# 1) 安裝相容 Python（3.12）
+brew install python@3.12
+
+# 2) 用 3.12 重建虛擬環境
+rm -rf .venv
+python3.12 -m venv .venv
+source .venv/bin/activate
+
+# 3) 重新安裝依賴
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# 4) 套用本地模型設定並啟動
+cp config/config.example-model-ollama.toml config/config.toml
+python main.py
+```
+
+如果你已經有 `scripts/setup_private_local.sh`，也可以改用：
+
+```bash
+cd ~/Downloads/openmanus
+PYTHON_BIN=python3.12 bash scripts/setup_private_local.sh
+```
+
+## 私有化本地部署（一步一步）
+
+如果你想把 OpenManus 變成「公司內網/本地機器可用」的私有部署，請直接看：[`docs_private_deploy_zh.md`](docs_private_deploy_zh.md)。
+
+也可以直接執行一鍵初始化腳本（會先幫你建立 `config/config.toml`、`.env.private`、`.venv`）。
+
+**執行位置一定要在專案根目錄**（同層要看得到 `main.py`、`config/`、`scripts/`）：
+
+```bash
+cd /opt/openmanus
+bash scripts/setup_private_local.sh
+```
+
+### 你只要照貼這段到終端機（最簡單）
+
+> 先打開你的終端機（Terminal），整段貼上後按 Enter：
+
+```bash
+cd /opt
+if [ ! -d /opt/openmanus ]; then
+  git clone https://github.com/FoundationAgents/OpenManus.git openmanus
+fi
+cd /opt/openmanus
+bash scripts/run_private_local.sh
+```
+
+如果你不是裝在 `/opt/openmanus`，就把第 1~3 行改成你的路徑，例如：`cd ~/openmanus`。
+
 ## 快速启动
 
 一行命令运行 OpenManus：
